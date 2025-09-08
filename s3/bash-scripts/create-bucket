@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "== create bucket =="
+
+# ---- Args ----
+BUCKET_NAME="${1:-}"
+REGION="${2:-$AWS_REGION}"
+
+if [ -z "$BUCKET_NAME" ]; then
+    echo "No bucket name provided (eg - './bucket my-bucket-name [region]')"
+    exit 1
+fi
+if [ -z "$REGION" ]; then
+    echo "No region specified and no default found in AWS CLI config"
+    exit 1
+fi
+
+# ---- Create bucket ----
+if [[ "$REGION" == "us-east-1" ]]; then
+    # Special case: us-east-1 does not accept LocationConstraint
+    aws s3api create-bucket \
+        --bucket "$BUCKET_NAME" \
+        --region "$REGION" \
+        --query Location \
+        --output text
+else
+    aws s3api create-bucket \
+        --bucket "$BUCKET_NAME" \
+        --region "$REGION" \
+        --create-bucket-configuration LocationConstraint="$REGION" \
+        --query Location \
+        --output text
+fi
+
+echo "== done =="

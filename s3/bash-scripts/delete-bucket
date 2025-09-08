@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "== delete bucket =="
+
+# ---- Args ----
+BUCKET_NAME="${1:-}"
+
+if [ -z "$BUCKET_NAME" ]; then
+    echo "No bucket name provided (eg - './bucket my-bucket-name')"
+    exit 1
+fi
+
+# ---- Delete bucket ----
+aws s3api delete-bucket \
+--bucket $BUCKET_NAME \
+
+echo "== done =="

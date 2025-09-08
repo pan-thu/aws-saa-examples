@@ -1,0 +1,29 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "== put object =="
+
+# Args: bucket, file_path, [key]
+BUCKET="${1:-}"
+FILEPATH="${2:-}"
+KEY="${3:-}"
+
+if [[ -z "$BUCKET" || -z "$FILEPATH" ]]; then
+  echo "Usage: $0 <bucket> <file_path> [key]"
+  exit 1
+fi
+
+if [[ ! -f "$FILEPATH" ]]; then
+  echo "File not found: $FILEPATH"
+  exit 1
+fi
+
+# Default object key = basename if not provided
+KEY="${KEY:-$(basename "$FILEPATH")}"
+
+aws s3api put-object \
+  --bucket "$BUCKET" \
+  --key "$KEY" \
+  --body file://"$FILEPATH"
+
+echo "Uploaded: s3://$BUCKET/$KEY"

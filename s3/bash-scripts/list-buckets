@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "== list buckets =="
+
+TOP_BUCKETS="${1:-}"
+
+# Grab all buckets sorted by creation date (newest first)
+ALL_BUCKETS=$(aws s3api list-buckets --query "Buckets[].{Name:Name,Date:CreationDate}" --output json)
+
+if [ -n "$TOP_BUCKETS" ]; then
+    # Show top N newest buckets
+    echo "$ALL_BUCKETS" \
+      | jq -r --argjson N "$TOP_BUCKETS" \
+        'sort_by(.Date) | reverse | .[0:$N] | .[] | .Name'
+else
+    # Show all, newest first
+    echo "$ALL_BUCKETS" \
+      | jq -r 'sort_by(.Date) | reverse | .[] | .Name'
+fi
+
+echo "== done =="

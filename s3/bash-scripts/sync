@@ -1,0 +1,52 @@
+#!/bin/bash
+set -euo pipefail
+
+echo "== sync =="
+
+# ---- Args ----
+BUCKET_NAME="${1:-}"
+FILE_BASE="${2:-}"
+COUNT="${3:-}"
+
+if [[ -z "$BUCKET_NAME" ]]; then
+  echo "No bucket name provided (e.g., './bucket my-bucket-name FILE_NAME 10')"
+  exit 1
+fi
+if [[ -z "$FILE_BASE" ]]; then
+  echo "No file base name provided (e.g., 'FILE_NAME')"
+  exit 1
+fi
+if [[ -z "$COUNT" ]]; then
+  echo "No number of files provided (e.g., 10)"
+  exit 1
+fi
+if ! [[ "$COUNT" =~ ^[0-9]+$ && "$COUNT" -gt 0 ]]; then
+  echo "COUNT must be a positive integer"
+  exit 1
+fi
+
+# ---- Prep output dir ----
+OUTPUT_DIR="./tmp/s3-bash-scripts"
+rm -rf "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR"
+
+# ---- Create files ----
+for (( i=1; i<=COUNT; i++ )); do
+  FILENAME="${FILE_BASE}_${i}.txt"
+  # ~1KB of readable gibberish
+  head -c 1024 </dev/urandom | base64 > "$OUTPUT_DIR/$FILENAME"
+  echo "Created: $OUTPUT_DIR/$FILENAME"
+done
+
+# ---- Show structure (fallback if 'tree' missing) ----
+if command -v tree >/dev/null 2>&1; then
+  tree "$OUTPUT_DIR"
+else
+  echo "Directory contents:"
+  find "$OUTPUT_DIR" -maxdepth 1 -type f -printf '%f\n'
+fi
+
+# ---- Sync to S3 ----
+aws s3 sync "$OUTPUT_DIR" "s3://$BUCKET_NAME/files" --only-show-errors
+
+echo "== done =="

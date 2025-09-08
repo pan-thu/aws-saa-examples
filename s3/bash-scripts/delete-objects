@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+echo "== delete objects =="
+
+set -euo pipefail
+
+# ---- Args ----
+BUCKET="$1"
+
+mkdir -p /tmp
+OUTFILE=/tmp/s3-objects-delete.json
+
+# Step 1: List objects and build delete.json
+aws s3api list-objects-v2 \
+  --bucket "$BUCKET" \
+  | jq '{Objects: [ .Contents[] | {Key: .Key} ]}' > "$OUTFILE"
+
+# Step 2: Call delete-objects with that JSON
+aws s3api delete-objects \
+  --bucket "$BUCKET" \
+  --delete file://"$OUTFILE"
+
+echo "== done =="
