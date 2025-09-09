@@ -24,6 +24,6 @@ KEY="${KEY:-$(basename "$FILEPATH")}"
 aws s3api put-object \
   --bucket "$BUCKET" \
   --key "$KEY" \
-  --body file://"$FILEPATH"
+  --body "$FILEPATH"
 
 echo "Uploaded: s3://$BUCKET/$KEY"
